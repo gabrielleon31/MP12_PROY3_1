@@ -5,7 +5,7 @@ try {
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     // Eliminar productos existentes (si lo deseas)
-    $db->exec("DELETE FROM products");
+    // $db->exec("DELETE FROM products");
 
     // Crear la tabla products si no existe
     $db->exec("CREATE TABLE IF NOT EXISTS products (
