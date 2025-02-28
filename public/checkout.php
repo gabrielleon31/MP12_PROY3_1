@@ -3,7 +3,7 @@
 require_once('../vendor/autoload.php');
 
 // Configurar Stripe con tu clave secreta
-\Stripe\Stripe::setApiKey('sk_test_51QxWJZDeBypX4ZzzTHr0i2PQZBtmRvbtXUQNk974ftxp2Z44XcWfhfdW4Jnb27wQRkrfckkJayiHTMWZ9DCOClLe00xbmVjy6l'); // Usa tu clave secreta de Stripe
+\Stripe\Stripe::setApiKey('-'); // Usa tu clave secreta de Stripe
 
 // Verificar si el formulario es enviado para realizar el pago
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['payment_method_id'])) {
@@ -50,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['payment_method_id'])) 
 
     <script>
         // Crear una instancia de Stripe usando tu clave pública
-        var stripe = Stripe('pk_test_51QxWJZDeBypX4ZzzOgJhTlOjo6WKSCZaeQ4rqqDj1uIDs5m8TUYER9nJfuriQ6ma8e49tm9BtMy0YvFbK0qHw4uQ0054Ezcijt'); // Tu clave pública de Stripe
+        var stripe = Stripe('-'); // Tu clave pública de Stripe
         var elements = stripe.elements();
         var card = elements.create('card');
         card.mount('#card-element');
