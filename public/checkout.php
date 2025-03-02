@@ -7,7 +7,17 @@ ini_set('display_errors', 1);
 require_once('../vendor/autoload.php');
 
 // Configurar Stripe con tu clave secreta
-\Stripe\Stripe::setApiKey('-');
+\Stripe\Stripe::setApiKey('sk_test_51QxWJZDeBypX4ZzzTHr0i2PQZBtmRvbtXUQNk974ftxp2Z44XcWfhfdW4Jnb27wQRkrfckkJayiHTMWZ9DCOClLe00xbmVjy6l');
+
+// Iniciar sesión para verificar si ya se procesó el pago
+session_start();
+
+// Verificar si ya se procesó el pago en esta sesión
+if (isset($_SESSION['payment_processed']) && $_SESSION['payment_processed'] === true) {
+    echo "Redirigiendo a success.php...";
+    header('Location: ../public/success.php ');
+    exit();
+}
 
 // Verificar si el formulario es enviado para realizar el pago
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['payment_method_id'])) {
@@ -31,16 +41,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['payment_method_id'])) 
         echo "<pre>";
         print_r($charge);
         echo "</pre>";
-        exit();
 
-        // Redirigir a la página de éxito
-        header('Location: success.php');
-        exit();
+        // Verifica si el pago fue exitoso
+        if ($charge->status == 'succeeded') {
+            echo "El pago fue exitoso.";
+            
+            // Marcar el pago como procesado en la sesión para evitar duplicados
+            $_SESSION['payment_processed'] = true;
+
+            // Redirigir a la página de éxito
+            header('Location: ../public/success.php');
+            exit();
+        } else {
+            echo "El pago no fue exitoso. Estado del pago: " . $charge->status;
+        }
     } catch (\Stripe\Exception\CardException $e) {
         // Mostrar error si el pago falla
         echo '<pre>';
         print_r($e);
         echo '</pre>';
+        echo "Error en el pago: " . $e->getMessage();
         exit();
     }
 }
@@ -103,6 +123,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['payment_method_id'])) 
             color: white;
             padding: 10px 0;
             text-align: center;
+            border-radius: 10px;
+            padding: 6px;
         }
 
         header a {
@@ -152,7 +174,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['payment_method_id'])) 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             // Crear una instancia de Stripe usando tu clave pública
-            var stripe = Stripe('-');
+            var stripe = Stripe('pk_test_51QxWJZDeBypX4ZzzOgJhTlOjo6WKSCZaeQ4rqqDj1uIDs5m8TUYER9nJfuriQ6ma8e49tm9BtMy0YvFbK0qHw4uQ0054Ezcijt');
             var elements = stripe.elements();
             var card = elements.create('card');
             card.mount('#card-element');
@@ -169,12 +191,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['payment_method_id'])) 
             paymentForm.addEventListener('submit', async function(event) {
                 event.preventDefault();
 
+                console.log("Formulario enviado, creando método de pago...");
+                
+                // Deshabilitar el botón de envío para evitar múltiples clics
+                document.getElementById('submit').disabled = true;
+
                 // Crear el método de pago con Stripe Elements
                 const { paymentMethod, error } = await stripe.createPaymentMethod('card', card);
 
                 if (error) {
-                    console.error("Error en el pago:", error.message);
+                    console.error("Error al crear el método de pago:", error.message);
                     cardErrors.textContent = error.message;
+                    // Habilitar el botón de nuevo en caso de error
+                    document.getElementById('submit').disabled = false;
                 } else {
                     console.log("Método de pago creado:", paymentMethod.id);
 
@@ -185,19 +214,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['payment_method_id'])) 
                     paymentMethodInput.setAttribute('value', paymentMethod.id);
                     paymentForm.appendChild(paymentMethodInput);
 
-                    console.log("Enviando formulario...");
+                    console.log("Formulario listo para enviar...");
 
-                    // Verifica que paymentForm es un formulario HTML válido antes de hacer submit
-                    if (paymentForm instanceof HTMLFormElement) {
-                        // Ahora puedes utilizar el submit de manera segura
-                        paymentForm.submit();
-                    } else {
-                        console.error("El formulario no es válido para enviar.");
-                    }
+                    // Usar requestSubmit() para enviar el formulario
+                    paymentForm.requestSubmit();  // Este método es suficiente para enviar el formulario
                 }
             });
         });
-
     </script>
 </body>
 </html>
